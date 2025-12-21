@@ -1,0 +1,29 @@
+import csv
+
+from transaction import Transaction
+
+
+class CSVHandler:
+    def __init__(self, filename: str):
+        self.filename = filename  # Store the CSV file path
+
+    def save_transactions(
+        self, transactions: list
+    ) -> None:  # Save all transactions to CSV
+        # Open file in write format
+        with open(self.filename, "w", newline="") as f:  # 'w' = write mode (overwrites)
+            writer = csv.DictWriter(
+                f, fieldnames=["amount", "date", "category", "description", "type"]
+            )
+            # Writes the header row
+            writer.writeheader()
+            for transaction in transactions:
+                writer.writerow(  # Writes a data row
+                    {
+                        "amount": transaction.amount,
+                        "date": transaction.date,
+                        "category": transaction.category,
+                        "description": transaction.description,
+                        "type": transaction.type,
+                    }
+                )
