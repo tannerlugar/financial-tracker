@@ -27,3 +27,17 @@ class CSVHandler:
                         "type": transaction.type,
                     }
                 )
+
+    def load_transactions(self) -> list: # Load all transactions from CSV
+        # Create an empty list to store Treansaction objects
+        transactions = []
+        # Open the CSV file for reading
+        with open(self.filename, "r") as f: # 'r' = read mode (does not overwrite)
+            reader = csv.DictReader(f) # Create a CSV reader object
+            for row in reader: # Iterate over each row in the CSV file
+                # Create a new Transaction object from that row's data
+                transaction = Transaction(float(row['amount']), row['date'], row['category'], row['description'], row['type'])
+                transactions.append(transaction) # Add the new Transaction object to the list
+            return transactions # Return the list
+
+
