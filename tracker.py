@@ -12,3 +12,8 @@ class TransactionManager:
 
     def get_all_transactions(self) -> list:  # Returns the list of all transactions
         return self.transactions
+
+    def delete_transaction(self, index: int) -> None:
+        # Delete transcation at the given index
+        if 0 <= index < len(self.transactions):
+            self.transactions.pop(index)

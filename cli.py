@@ -14,6 +14,8 @@ class CLI:
         print("3. View All Transactions")
         print("4. View Summary")
         print("5. Exit")
+        print("6. Delete Transaction")
+        print("7. Update Transaction")
         print()
         print("Enter choice: ", end='')
     
@@ -37,6 +39,10 @@ class CLI:
             elif choice == '5':
                 print("Exiting...")
                 break
+            elif choice == '6':
+                self.delete_transaction()
+            elif choice == '7':
+                self.edit_transaction()
             else:
                 print("Invalid choice, Please try again.")
 
@@ -96,3 +102,97 @@ class CLI:
             print(f"Total Income: ${total_income:.2f}")
             print(f"Total Expenses: ${abs(total_expenses):.2f}")
             print(f"Balance: ${balance:.2f}")
+    
+    def delete_transaction(self) -> None:
+        # Get all transactions from the Transaction Manager
+        transactions = self.manager.get_all_transactions()
+        # If empty, show message and return
+        if not transactions:
+            print("No transactions available to delete.")
+            return
+        # Display transactions with indices
+        for idx, transaction in enumerate(transactions):
+            print(f"{idx + 1}. {transaction}")
+        # Get user input (number or 'c')
+        choice = input("Enter the number of the transaction to delete (or 'c' to cancel): ")
+        # If 'c', return (cancel)
+        if choice.lower() == 'c':
+            print("Deletion cancelled.")
+            return
+        # Validate the number (is it a valid index?)
+        try:
+            index = int(choice) - 1
+            if index < 0 or index >= len(transactions):
+                print("Invalid selection. Please try again.")
+                return
+        except ValueError:
+            print("Invalid input. Please enter a number or 'c' to cancel.")
+            return
+        # Show the transaction and confirm (y/n)   
+        transaction_to_delete = transactions[index]
+        confirm = input(f"Are you sure you want to delete the following transaction? (y/n)\n{transaction_to_delete}\n")
+        if confirm.lower() != 'y':
+            print("Deletion cancelled.")
+            return
+        # If yes, delete from manager's list
+        self.manager.delete_transaction(index)
+        # Save to CSV
+        self.csv_handler.save_transactions(self.manager.get_all_transactions())
+        print("Transaction deleted successfully.")
+
+    def edit_transaction(self) -> None:
+        # Get all transactions from the Transaction Manager
+        transactions = self.manager.get_all_transactions()
+        # If empty, show message and return
+        if not transactions:
+            print("No transactions available to update.")
+            return
+        # Display transactions with indices
+        for idx, transaction in enumerate(transactions):
+            print(f"{idx + 1}. {transaction}")
+        # Get user input (number or 'c')
+        choice = input("Enter the number of the transaction to update (or 'c' to cancel): ")
+        # if 'c', return (cancel)
+        if choice.lower() == 'c':
+            print("Update cancelled.")
+            return
+        # Validate the number (is it a valid index?)
+        try:
+            index = int(choice) - 1
+            if index < 0 or index >= len(transactions):
+                print("Invalid selection. Please try again.")
+                return
+        except ValueError:
+            print("Invalid input. Please enter a number or 'c' to cancel.")
+            return
+        # Get the transaction to edit
+        transaction_to_edit = transactions[index]
+        print(f"Editing transaction: {transaction_to_edit}")
+        # For each field (amount, date, category, description): - Show current value - Get new value (or press Enter to keep current)
+        new_amount = input(f"Enter new amount (current: {transaction_to_edit.amount}) or press Enter to keep: ")
+        new_date = input(f"Enter new date (current: {transaction_to_edit.date}) or press Enter to keep: ")
+        new_category = input(f"Enter new category (current: {transaction_to_edit.category}) or press Enter to keep: ")
+        new_description = input(f"Enter new description (current: {transaction_to_edit.description}) or press Enter to keep: ")
+        # Handle amount - auto-negate for expenses, keep positive for income
+        if new_amount:
+            amount = float(new_amount)
+            # Ensure correct sign based on type
+            if transaction_to_edit.type == 'expense' and amount > 0:
+                amount = -abs(amount) # Always negative
+            else: # income
+                amount = abs(amount) # Always positive
+        else:
+            amount = transaction_to_edit.amount
+        # Create NEW Transaction with updated values (keep same type!)
+        updated_transaction = Transaction(
+            amount, # Use the processed amount
+            new_date if new_date else transaction_to_edit.date,
+            new_category if new_category else transaction_to_edit.category,
+            new_description if new_description else transaction_to_edit.description,
+            transaction_to_edit.type
+        )
+        # Replace old transaction in list
+        self.manager.transactions[index] = updated_transaction
+        # Save to CSV
+        self.csv_handler.save_transactions(self.manager.get_all_transactions())
+        print("Transaction updated successfully")
