@@ -1,6 +1,7 @@
 from tracker import TransactionManager 
 from csv_handler import CSVHandler
 from transaction import Transaction
+from datetime import datetime
 
 class CLI:
     def __init__(self, manager: TransactionManager, csv_handler: CSVHandler):
@@ -80,11 +81,48 @@ class CLI:
         # If list is empty, print message
         if not transactions:
             print("No transactions available.")
-        else:
-            # Display all transactions
+            return
+        # Show filter options
+        print("\nView Options:")
+        print("1. All Transactions")
+        print("2. Filter by Date Range")
+        print("3. This Month Only")
+        choice = input("Enter choice: ")
+
+        if choice == '1':
+            # Show all (current behavior)
+            print("\n=== All Transactions ===")
             for transaction in transactions:
                 print(transaction)
-    
+        elif choice == '2':
+            # Filter by Date Range
+            start_date_str = input("Enter start date (MM/DD/YYYY): ")
+            end_date_str = input("Enter end date (MM/DD/YYYY): ")
+
+            # Convert strings to datetime objects
+            start_date = datetime.strptime(start_date_str, "%m/%d/%Y")
+            end_date = datetime.strptime(end_date_str, "%m/%d/%Y")
+
+            print(f"\n=== Transactions from {start_date_str} to {end_date_str} ===")
+            for transaction in transactions:
+                trans_date = datetime.strptime(transaction.date, "%m/%d/%Y")
+                if start_date <= trans_date <= end_date:
+                    print(transaction)
+        elif choice == '3':
+            # This Month Only
+            current_month = datetime.now().month
+            current_year = datetime.now().year
+            print(f"\n=== Transactions for {current_month}/{current_year} ===")
+            for transaction in transactions:
+                trans_date = datetime.strptime(transaction.date, "%m/%d/%Y")
+                if trans_date.month == current_month and trans_date.year == current_year:
+                    print(transaction)
+                else:
+                    continue
+        else:
+            print("Invalid choice.")
+            return
+        
     def view_summary(self) -> None:
         # Get all transactions from the Transaction Manager
         transaction = self.manager.get_all_transactions()
