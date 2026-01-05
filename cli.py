@@ -3,6 +3,21 @@ from csv_handler import CSVHandler
 from transaction import Transaction
 from datetime import datetime
 
+INCOME_CATEGORIES = [
+    "Salary",
+    "Freelance/Side Hustle",
+    "Other Income"
+]
+
+EXPENSE_CATEGORIES = [
+    "Food & Groceries",
+    "Transportation",
+    "Bills & Utilities",
+    "Entertainment",
+    "Shopping",
+    "Healthcare"
+]
+
 class CLI:
     def __init__(self, manager: TransactionManager, csv_handler: CSVHandler):
         self.manager = manager # Reference to the Transaction Manager
@@ -51,7 +66,7 @@ class CLI:
         # Prompt user for income details
         amount = float(input("Enter income amount: "))
         date = input("Enter date (MM/DD/YYYY): ")
-        category = input("Enter category: ")
+        category = self.select_category('income') 
         description = input("Enter description: ")
         #Create a Transaction object
         income = Transaction(amount, date, category, description, "income")
@@ -65,7 +80,7 @@ class CLI:
         # Prompt user for expense details
         amount = float(input("Enter expense amount: "))
         date = input("Enter date (MM/DD/YYYY): ")
-        category = input("Enter category: ")
+        category = self.select_category('expense')
         description = input("Enter description: ")
         # Create a Transaction object
         expense = Transaction(-amount, date, category, description, "expense")
@@ -209,7 +224,12 @@ class CLI:
         # For each field (amount, date, category, description): - Show current value - Get new value (or press Enter to keep current)
         new_amount = input(f"Enter new amount (current: {transaction_to_edit.amount}) or press Enter to keep: ")
         new_date = input(f"Enter new date (current: {transaction_to_edit.date}) or press Enter to keep: ")
-        new_category = input(f"Enter new category (current: {transaction_to_edit.category}) or press Enter to keep: ")
+        print(f'\nCurrent category: {transaction_to_edit.category}')
+        change_category = input("Change category? (y/n): ")
+        if change_category.lower() == 'y':
+            new_category = self.select_category(transaction_to_edit.type)
+        else:
+            new_category = transaction_to_edit.category
         new_description = input(f"Enter new description (current: {transaction_to_edit.description}) or press Enter to keep: ")
         # Handle amount - auto-negate for expenses, keep positive for income
         if new_amount:
@@ -234,3 +254,34 @@ class CLI:
         # Save to CSV
         self.csv_handler.save_transactions(self.manager.get_all_transactions())
         print("Transaction updated successfully")
+    
+    def select_category(self, transaction_type: str) -> str:
+        # Choose the right category list based on type
+        if transaction_type == 'income':
+            categories = INCOME_CATEGORIES
+        else:
+            categories = EXPENSE_CATEGORIES
+
+        # Display categories
+        print("\nSelect category:")
+        for idx, category in enumerate(categories, 1):
+            print(f"{idx}. {category}")
+        print(f"{len(categories) + 1}. Custom (Enter your own)")
+
+        # Get user choice
+        choice = input("Enter choice: ")
+
+        # Validate choice and return category
+        try:
+            index = int(choice) - 1
+            if 0 <= index < len(categories):
+                return categories[index]
+            elif index == len(categories):
+                custom_category = input("Enter custom category: ")
+                return custom_category
+            else:
+                print("Invalid choice. Using 'Other'.")
+                return 'Other'
+        except ValueError:
+            print("Invalid input. Using 'Other'.")
+            return 'Other'
