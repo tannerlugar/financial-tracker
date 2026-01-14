@@ -68,8 +68,48 @@ class DatabaseHandler:
                 row[2], # date
                 row[3], # category
                 row[4], # description
-                row[5]  # type
+                row[5], # type
+                row[0]  # id 
             )
             transactions.append(transaction)
 
         return transactions
+    
+    def add_transaction(self, transaction: Transaction) -> int:
+        '''Add a single transaction to the databnse and return its ID'''
+        cursor = self.conn.cursor()
+
+        cursor.execute('''
+                       INSERT INTO transactions (amount, date, category, description, type)
+                       VALUES (?, ?, ?, ?, ?)
+                       ''', (transaction.amount, transaction.date, transaction.category,
+                              transaction.description, transaction.type))
+        
+        self.conn.commit()
+
+        # Return the ID that was just created
+        return cursor.lastrowid
+    
+    def update_transaction(self, transaction: Transaction) -> None:
+        '''Update an existing transaction using its ID'''
+        if transaction.id is None:
+            raise ValueError("Cannot update transaction without an ID")
+        
+        cursor = self.conn.cursor()
+
+        cursor.execute('''
+                       UPDATE transactions
+                       SET amount = ?, date = ?, category = ?, description = ?, type = ?
+                       WHERE id = ?
+                       ''', (transaction.amount, transaction.date, transaction.category,
+                             transaction.description, transaction.type, transaction.id))
+        
+        self.conn.commit()
+
+    def delete_transaction(self, transaction_id: int) -> None:
+        '''Delete a single transaction by its ID'''
+        cursor = self.conn.cursor()
+
+        cursor.execute('DELETE FROM transactions WHERE id = ?', (transaction_id))
+
+        self.conn.commit()

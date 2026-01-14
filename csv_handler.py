@@ -29,7 +29,7 @@ class CSVHandler:
                 )
 
     def load_transactions(self) -> list: # Load all transactions from CSV
-        # Create an empty list to store Treansaction objects
+        # Create an empty list to store Transaction objects
         transactions = []
         try:
             # Open the CSV file for reading

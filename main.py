@@ -1,15 +1,19 @@
 from tracker import TransactionManager
-from csv_handler import CSVHandler
+from database_handler import DatabaseHandler 
 from cli import CLI
 
 def main():
     # Create the core objects
     manager = TransactionManager()
-    csv_handler = CSVHandler('data/transactions.csv')
+    db_handler = DatabaseHandler('data/transactions.db')
     
-    # Create and run CLI
-    cli = CLI(manager, csv_handler)
-    cli.run()
+    try:
+        # Create and run CLI
+        cli = CLI(manager, db_handler)
+        cli.run()
+    finally:
+        # Always close the database, even if there's an error
+        db_handler.close()
 
 if __name__ == "__main__":
     main()

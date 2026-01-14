@@ -1,5 +1,6 @@
 class Transaction:
-    def __init__(self, amount, date, category, description, type):
+    def __init__(self, amount, date, category, description, type, id=None):
+        self.id = id # Will be None for new transactions, assigned by DB when loaded
         self.amount = amount
         self.date = date
         self.category = category
