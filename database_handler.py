@@ -110,6 +110,6 @@ class DatabaseHandler:
         '''Delete a single transaction by its ID'''
         cursor = self.conn.cursor()
 
-        cursor.execute('DELETE FROM transactions WHERE id = ?', (transaction_id))
+        cursor.execute('DELETE FROM transactions WHERE id = ?', (transaction_id,))
 
         self.conn.commit()

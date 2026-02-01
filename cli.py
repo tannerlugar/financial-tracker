@@ -1,5 +1,5 @@
 from tracker import TransactionManager 
-from csv_handler import CSVHandler
+from database_handler import DatabaseHandler
 from transaction import Transaction
 from datetime import datetime
 
@@ -19,9 +19,9 @@ EXPENSE_CATEGORIES = [
 ]
 
 class CLI:
-    def __init__(self, manager: TransactionManager, csv_handler: CSVHandler):
+    def __init__(self, manager: TransactionManager, db_handler: DatabaseHandler):
         self.manager = manager # Reference to the Transaction Manager
-        self.csv_handler = csv_handler # Reference to the CSV Handler
+        self.db_handler = db_handler # Reference to Storage Manager
     
     def display_menu(self) -> None:
         print("=== Financial Tracker ===")
@@ -37,7 +37,7 @@ class CLI:
     
     def run(self) -> None:
         # Load Transactions at startup
-        self.manager.transactions = self.csv_handler.load_transactions()
+        self.manager.transactions = self.db_handler.load_transactions()
 
         while True:
             self.display_menu()
@@ -68,12 +68,14 @@ class CLI:
         date = input("Enter date (MM/DD/YYYY): ")
         category = self.select_category('income') 
         description = input("Enter description: ")
-        #Create a Transaction object
+        #Create a Transaction object (no ID)
         income = Transaction(amount, date, category, description, "income")
-        # Add to Transaction Manager
-        self.manager.add_transaction(income)
+        # Save to database and get the new ID
+        new_id = self.db_handler.add_transaction(income)
+        # Set the ID on transaction object
+        income.id = new_id
         # Save to CSV
-        self.csv_handler.save_transactions(self.manager.get_all_transactions())
+        self.manager.add_transaction(income)
         print("Income added successfully.")
 
     def add_expense(self) -> None:
@@ -84,10 +86,12 @@ class CLI:
         description = input("Enter description: ")
         # Create a Transaction object
         expense = Transaction(-amount, date, category, description, "expense")
-        #A Add to Transaction Manager
-        self.manager.add_transaction(expense)
+        # Save to database and get the new ID
+        new_id = self.db_handler.add_transaction(expense)
+        # Set the ID on transaction object
+        expense.id = new_id
         # Save to CSV
-        self.csv_handler.save_transactions(self.manager.get_all_transactions())
+        self.manager.add_transaction(expense)
         print("Expense added successfully.")
 
     def view_all_transactions(self) -> None:
@@ -187,10 +191,10 @@ class CLI:
         if confirm.lower() != 'y':
             print("Deletion cancelled.")
             return
-        # If yes, delete from manager's list
+        # Delete from database using transaction ID
+        self.db_handler.delete_transaction(transaction_to_delete.id)
+        # Delete from manager's in-memory list
         self.manager.delete_transaction(index)
-        # Save to CSV
-        self.csv_handler.save_transactions(self.manager.get_all_transactions())
         print("Transaction deleted successfully.")
 
     def edit_transaction(self) -> None:
@@ -247,12 +251,13 @@ class CLI:
             new_date if new_date else transaction_to_edit.date,
             new_category if new_category else transaction_to_edit.category,
             new_description if new_description else transaction_to_edit.description,
-            transaction_to_edit.type
+            transaction_to_edit.type,
+            transaction_to_edit.id
         )
-        # Replace old transaction in list
+        # Update in database using ID
+        self.db_handler.update_transaction(updated_transaction)
+        # Replace in manager's list
         self.manager.transactions[index] = updated_transaction
-        # Save to CSV
-        self.csv_handler.save_transactions(self.manager.get_all_transactions())
         print("Transaction updated successfully")
     
     def select_category(self, transaction_type: str) -> str:
